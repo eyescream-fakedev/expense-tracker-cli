@@ -1,4 +1,4 @@
-# Virtual Envrontment
+# Virtual Environment
 venv/
 .venv/
 
@@ -14,9 +14,22 @@ __pycache__/
 expenses.json
 
 # OS files
-.DS_Store
+[Dd][Ss]_[Ss]tore
 Thumbs.db
 
 # QWEN.md
 QWEN.md
 qwen-code-export-*.md
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
