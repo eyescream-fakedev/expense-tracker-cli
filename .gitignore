@@ -1,0 +1,22 @@
+# Virtual Envrontment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE settings
+.zed/
+.vscode/
+
+# Data files
+expenses.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# QWEN.md
+QWEN.md
+qwen-code-export-2026-03-30T17-50-54-414Z.md
