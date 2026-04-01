@@ -16,13 +16,12 @@ def calculate_total(expenses: list[dict]) -> float:
     return sum(expense["amount"] for expense in expenses)
 
 
-def filter_by_month(expenses: list[dict], year: int, month: int) -> list[dict]:
+def filter_by_month(expenses: list[dict], month: int) -> list[dict]:
     """
     Filter expenses by a specific month.
 
     Args:
         expenses (list[dict]): A list of expense dictionaries.
-        year (int): The year to filter by.
         month (int): The month to filter by.
 
     Returns:
@@ -35,11 +34,34 @@ def filter_by_month(expenses: list[dict], year: int, month: int) -> list[dict]:
         if "date" not in expense:
             raise KeyError("Missing 'date' key in expense")
 
-    return [
-        expense
-        for expense in expenses
-        if expense["date"].startswith(f"{year}-{month:02d}-")
-    ]
+    filtered_expenses = []
+    for expense in expenses:
+        dt = datetime.strptime(expense["date"], "%Y-%m-%d")
+        if dt.month == month:
+            filtered_expenses.append(expense)
+    return filtered_expenses
+
+
+def filter_by_year(expenses: list[dict], year: int) -> list[dict]:
+    """
+    Filter expenses by a specific year.
+
+    Args:
+        expenses (list[dict]): A list of expense dictionaries.
+        year (int): The year to filter by.
+
+    Returns:
+        list[dict]: A list of expenses from the specified year.
+    """
+    if not isinstance(year, int):
+        raise ValueError("Year must be an integer")
+
+    filtered_expenses = []
+    for expense in expenses:
+        dt = datetime.strptime(expense["date"], "%Y-%m-%d")
+        if dt.year == year:
+            filtered_expenses.append(expense)
+    return filtered_expenses
 
 
 def add_expense(expenses: list[dict], new_expense: dict) -> list[dict]:

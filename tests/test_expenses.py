@@ -33,7 +33,7 @@ def test_filter_by_month_returns_expenses_from_specific_month():
 
     # Act
     # - Filter by month
-    result = expense.filter_by_month(expenses, year=2026, month=2)
+    result = expense.filter_by_month(expenses, month=2)
 
     # Assert
     # - Assert that the result contains only expenses from the specified month
@@ -52,7 +52,39 @@ def test_filter_by_month_with_missing_date_key():
 
     # Act & Assert
     with pytest.raises(KeyError):
-        expense.filter_by_month(expenses, year=2026, month=2)
+        expense.filter_by_month(expenses, month=2)
+
+
+def test_filter_by_year_from_specific_year():
+    """Test that filter_by_year returns the correct expenses for a given year."""
+    # Arrange
+    expenses = [
+        {"amount": 10, "description": "Groceries", "date": "2026-02-01"},
+        {"amount": 20, "description": "Dinner", "date": "2026-02-14"},
+        {"amount": 30, "description": "Lunch", "date": "2026-02-28"},
+        {"amount": 40, "description": "Snacks", "date": "2027-03-01"},
+    ]
+
+    # Act
+    result = expense.filter_by_year(expenses, year=2026)
+
+    # Assert
+    assert len(result) == 3
+
+
+def test_filter_by_year_not_numeric_raises_error():
+    """Test that filter_by_year raises a ValueError when the year is not numeric."""
+    # Arrange
+    expenses = [
+        {"amount": 10, "description": "Groceries", "date": "2026-02-01"},
+        {"amount": 20, "description": "Dinner", "date": "2026-02-14"},
+        {"amount": 30, "description": "Lunch", "date": "2026-02-28"},
+        {"amount": 40, "description": "Snacks", "date": "2027-03-01"},
+    ]
+
+    # Act & Assert
+    with pytest.raises(ValueError):
+        expense.filter_by_year(expenses, year="2026")  # pyright: ignore[reportArgumentType]
 
 
 def test_add_expense_adds_to_the_expenses_list():
@@ -215,6 +247,11 @@ def test_is_valid_date_returns_false_for_invalid_date():
     result = expense.is_valid_date(invalid_date)
     # Assert
     assert result is False
-    assert expense.is_valid_date("2026/02/01") is False
-    assert expense.is_valid_date("02-01-2026") is False
-    assert expense.is_valid_date("March 1, 2026") is False
+
+
+def test_is_valid_data_returns_false_for_wrong_format():
+    """Test that is_valid_date returns False for a date string with wrong format."""
+
+    assert expense.is_valid_date("2026/02/01") is False  # Slashes
+    assert expense.is_valid_date("02-01-2026") is False  # Day first
+    assert expense.is_valid_date("March 1, 2026") is False  # Text
