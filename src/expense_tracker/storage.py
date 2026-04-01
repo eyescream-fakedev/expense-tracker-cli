@@ -30,9 +30,8 @@ class DatabaseManager:
 
         with open(self.data_file_path, "r") as file:
             data = json.load(file)
-
-        if not isinstance(data, list):
-            raise TypeError(f"Expected list, got {type(data).__name__}")
+            if not isinstance(data, list):
+                raise TypeError(f"Expected list, got {type(data).__name__}")
 
         for i, item in enumerate(data):
             if not isinstance(item, dict):

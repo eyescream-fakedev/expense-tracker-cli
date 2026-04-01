@@ -84,6 +84,9 @@ def test_add_expense_adds_to_the_expenses_list():
 
 
 def test_add_expense_rejects_negative_amount():
+    """
+    Test that adding an expense with a negative amount raises a ValueError.
+    """
     # Arrange: Create expense with negative amount
     # - Create a list of expense dictionaries with a 'description', 'amount', and 'date' key
     # - Create a new expense with a negative amount
@@ -192,3 +195,26 @@ def test_delete_expense_raises_error_when_expenses_empty():
     # Act & Assert
     with pytest.raises(ValueError):
         expense.delete_expense(expenses, 1)
+
+
+def test_is_valid_date_returns_true_for_valid_date():
+    """Test that is_valid_date returns True for a valid date string."""
+    # Arrange
+    valid_date = "2026-02-01"
+    # Act
+    result = expense.is_valid_date(valid_date)
+    # Assert
+    assert result is True
+
+
+def test_is_valid_date_returns_false_for_invalid_date():
+    """Test that is_valid_date returns False for an invalid date string."""
+    # Arrange
+    invalid_date = "2026-02-31"
+    # Act
+    result = expense.is_valid_date(invalid_date)
+    # Assert
+    assert result is False
+    assert expense.is_valid_date("2026/02/01") is False
+    assert expense.is_valid_date("02-01-2026") is False
+    assert expense.is_valid_date("March 1, 2026") is False

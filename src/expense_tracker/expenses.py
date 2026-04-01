@@ -1,5 +1,7 @@
 """Business logic for expense operations."""
 
+from datetime import datetime
+
 
 def calculate_total(expenses: list[dict]) -> float:
     """
@@ -53,15 +55,16 @@ def add_expense(expenses: list[dict], new_expense: dict) -> list[dict]:
     """
     # Validation:
     # - required keys must be present
-    # - description must not be empty
-    # - amount must be greater than 0
     required_keys = ["description", "amount", "date"]
     for key in required_keys:
         if key not in new_expense:
             raise KeyError(f"Missing '{key}' key in expense")
+    # - Check date format and value
+    if not is_valid_date(new_expense["date"]):
+        raise ValueError("Date must be in YYYY-MM-DD format")
     if not new_expense["description"].strip():
         raise ValueError("Expense description must not be empty")
-
+    # - Check amount is greater than 0
     if new_expense["amount"] < 1:
         raise ValueError("Expense amount must be greater than 0")
 
@@ -88,6 +91,23 @@ def delete_expense(expenses: list[dict], expense_id: int) -> list[dict]:
             expenses_copy.remove(expense)
             return expenses_copy
     raise ValueError(f"Expense with ID {expense_id} not found")
+
+
+def is_valid_date(date: str) -> bool:
+    """
+    Check if the date string is in the format "YYYY-MM-DD" and the year, month, and day are valid numbers.
+
+    Args:
+        date (str): The date string to check.
+
+    Returns:
+        bool: True if the date is valid, False otherwise.
+    """
+    try:
+        datetime.strptime(date, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 
 def _generate_next_id(expenses: list[dict]) -> int:
