@@ -11,6 +11,7 @@ from expense_tracker.storage import DatabaseManager  # noqa: E402
 
 
 def test_load_expenses_returns_empty_list_when_file_does_not_exist(tmp_path):
+    """Load expenses returns an empty list when the file does not exist."""
     # Arrange
     # - Remove the file if it exists
     # - Create storage instance

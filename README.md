@@ -1,5 +1,5 @@
 # Expense Tracker CLI
-
+Trying to code based on https://roadmap.sh/projects/expense-tracker
 A command-line expense tracker application built with Python using TDD (Test-Driven Development).
 
 ## Features
