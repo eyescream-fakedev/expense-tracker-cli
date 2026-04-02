@@ -1,13 +1,10 @@
 import json
 import os
-import sys
 from pathlib import Path
 
 import pytest
 
-src_path = Path(__file__).parent.parent / "src"
-sys.path.insert(0, str(src_path))
-from expense_tracker.storage import DatabaseManager  # noqa: E402
+from expense_tracker.storage import DatabaseManager
 
 
 def test_load_expenses_returns_empty_list_when_file_does_not_exist(tmp_path):
@@ -158,6 +155,8 @@ def test_load_expenses_handles_wrong_format(tmp_path):
 
 def test_load_expenses_raises_permission_error_when_no_read_access(tmp_path):
     """Test that loading expenses raises PermissionError when the file is not readable."""
+    if os.geteuid() == 0:
+        pytest.skip("Permission checks are not reliable when tests run as root")
     # Arrange
     # - Create a file with some data
     # - Remove read permission using os.chmod()
