@@ -5,6 +5,7 @@ from expense_tracker.expenses import (
     add_expense,
     calculate_total,
     delete_expense,
+    filter_by_category,
     filter_by_month,
     filter_by_year,
 )
@@ -14,32 +15,36 @@ SCRIPT_DIR = Path(__file__).parent
 DATA_FILE_PATH = SCRIPT_DIR / "expenses.json"
 
 
-def list_expenses(month: int | None = None, year: int | None = None) -> None:
+def list_expenses(
+    month: int | None = None,
+    year: int | None = None,
+    category: str | None = None,
+) -> None:
     """
     List all expenses for a given month and year.
 
     Args:
         month (int | None): The month to filter by, or None to list all months.
         year (int | None): The year to filter by, or None to list all years.
+        category (str | None): The category to filter by, or None to list all categories.
     """
     # if month and/or year is provided, filter expenses accordingly
     try:
         db_manager = DatabaseManager(DATA_FILE_PATH)
         expenses = db_manager.load_expenses()
+        result = expenses
 
-        if year and month:
-            filtered_expenses = filter_by_year(expenses, year)
-            filtered_expenses = filter_by_month(filtered_expenses, month=month)
-        elif month:
-            filtered_expenses = filter_by_month(expenses, month=month)
-        elif year:
-            filtered_expenses = filter_by_year(expenses, year)
-        else:
-            filtered_expenses = expenses
+        if year:
+            result = filter_by_year(result, year)
+        if month:
+            result = filter_by_month(result, month)
+        if category:
+            result = filter_by_category(result, category)
+
         # print title with fixed-width column formatting
         print(f"{'ID':<5} {'Date':<12} {'Description':<25} {'Amount':>10}")
         print("-" * 45)
-        for expense in filtered_expenses:
+        for expense in result:
             print(
                 f"{expense['id']:<5} {expense['date']:<12} {expense['description']:<25} ${expense['amount']:>8.2f}"
             )
@@ -107,25 +112,32 @@ def delete_expense_cli(expense_id: int) -> None:
         print(f"Error: {error}")
 
 
-def show_summary(month: int | None = None, year: int | None = None) -> None:
+def show_summary(
+    month: int | None = None,
+    year: int | None = None,
+    category: str | None = None,
+) -> None:
     """
     Show the summary amount of expenses.
 
     Args:
         month (int | None): The month to filter by, or None to list all months.
         year (int | None): The year to filter by, or None to list all years.
+        category (str | None): The category to filter by, or None to list all categories.
     """
     try:
         db_manager = DatabaseManager(DATA_FILE_PATH)
         expenses = db_manager.load_expenses()
-        if month and year:
-            expenses = filter_by_year(expenses, year)
-            expenses = filter_by_month(expenses, month)
-        elif month:
-            expenses = filter_by_month(expenses, month)
-        elif year:
-            expenses = filter_by_year(expenses, year)
-        total = calculate_total(expenses)
+        result = expenses
+
+        if year:
+            result = filter_by_year(result, year)
+        if month:
+            result = filter_by_month(result, month)
+        if category:
+            result = filter_by_category(result, category)
+
+        total = calculate_total(result)
         print(f"Total expenses: ${total:.2f}")
     except FileNotFoundError:
         print("No expenses found.")
@@ -168,13 +180,13 @@ def main():
     args = parser.parse_args()
     # 8. Call the right function
     if args.command == "list":
-        list_expenses(month=args.month, year=args.year)
+        list_expenses(month=args.month, year=args.year, category=args.category)
     elif args.command == "add":
         add_expense_cli(args.description, args.amount, args.date, args.category)
     elif args.command == "delete":
         delete_expense_cli(args.expense_id)
     elif args.command == "summary":
-        show_summary(args.month, args.year)
+        show_summary(args.month, args.year, args.category)
     elif args.command is None:
         parser.print_help()
 
