@@ -20,6 +20,7 @@ def list_expenses(
     month: int | None = None,
     year: int | None = None,
     category: str | None = None,
+    data_file_path: Path = DATA_FILE_PATH,
 ) -> None:
     """
     List all expenses for a given month and year.
@@ -31,7 +32,7 @@ def list_expenses(
     """
     # if month and/or year is provided, filter expenses accordingly
     try:
-        db_manager = DatabaseManager(DATA_FILE_PATH)
+        db_manager = DatabaseManager(data_file_path)
         expenses = db_manager.load_expenses()
         result = expenses
 
@@ -56,7 +57,11 @@ def list_expenses(
 
 
 def add_expense_cli(
-    description: str, amount: float, date: str, category: str | None
+    description: str,
+    amount: float,
+    date: str,
+    category: str | None,
+    data_file_path: Path = DATA_FILE_PATH,
 ) -> None:
     """
     Add a new expense via CLI.
@@ -70,7 +75,7 @@ def add_expense_cli(
     """
     try:
         # Load existing expenses
-        db_manager = DatabaseManager(DATA_FILE_PATH)
+        db_manager = DatabaseManager(data_file_path)
         expenses = db_manager.load_expenses()
 
         # Create new expense
@@ -94,7 +99,10 @@ def add_expense_cli(
         print(f"Error: {error}")
 
 
-def delete_expense_cli(expense_id: int) -> None:
+def delete_expense_cli(
+    expense_id: int,
+    data_file_path: Path = DATA_FILE_PATH,
+) -> None:
     """
     Delete an expense by its ID.
 
@@ -102,7 +110,7 @@ def delete_expense_cli(expense_id: int) -> None:
         expense_id (int): The ID of the expense to delete.
     """
     try:
-        db_manager = DatabaseManager(DATA_FILE_PATH)
+        db_manager = DatabaseManager(data_file_path)
         expenses = db_manager.load_expenses()
         updated_expenses = delete_expense(expenses, expense_id)
         db_manager.save_expenses(updated_expenses)
@@ -117,6 +125,7 @@ def show_summary(
     month: int | None = None,
     year: int | None = None,
     category: str | None = None,
+    data_file_path: Path = DATA_FILE_PATH,
 ) -> None:
     """
     Show the summary amount of expenses.
@@ -127,7 +136,7 @@ def show_summary(
         category (str | None): The category to filter by, or None to list all categories.
     """
     try:
-        db_manager = DatabaseManager(DATA_FILE_PATH)
+        db_manager = DatabaseManager(data_file_path)
         expenses = db_manager.load_expenses()
         result = expenses
 
@@ -187,6 +196,12 @@ def main():
     list_parser.add_argument("-y", "--year", type=int, help="Filter by year")
     list_parser.add_argument("-m", "--month", type=valid_month, help="Filter by month")
     list_parser.add_argument("-c", "--category", type=str, help="Filter by category")
+    list_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
 
     # 4. Add "add" command
     add_parser = subparsers.add_parser("add", help="Add a new expense")
@@ -194,10 +209,22 @@ def main():
     add_parser.add_argument("amount", type=float, help="Expense amount")
     add_parser.add_argument("date", type=str, help="Expense date (YYYY-MM-DD)")
     add_parser.add_argument("-c", "--category", type=str, help="Expense category")
+    add_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
 
     # 5. Add "delete" command
     delete_parser = subparsers.add_parser("delete", help="Delete an expense")
     delete_parser.add_argument("expense_id", type=int, help="Expense ID to delete")
+    delete_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
 
     # 6. Add "summary" command
     summary_parser = subparsers.add_parser("summary", help="Show summary expenses")
@@ -206,18 +233,43 @@ def main():
         "-m", "--month", type=valid_month, help="Filter by month"
     )
     summary_parser.add_argument("-c", "--category", type=str, help="Filter by category")
+    summary_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
 
     # 7. Parse arguments
     args = parser.parse_args()
     # 8. Call the right function
     if args.command == "list":
-        list_expenses(month=args.month, year=args.year, category=args.category)
+        list_expenses(
+            month=args.month,
+            year=args.year,
+            category=args.category,
+            data_file_path=args.data_file,
+        )
     elif args.command == "add":
-        add_expense_cli(args.description, args.amount, args.date, args.category)
+        add_expense_cli(
+            args.description,
+            args.amount,
+            args.date,
+            args.category,
+            data_file_path=args.data_file,
+        )
     elif args.command == "delete":
-        delete_expense_cli(args.expense_id)
+        delete_expense_cli(
+            args.expense_id,
+            data_file_path=args.data_file,
+        )
     elif args.command == "summary":
-        show_summary(args.month, args.year, args.category)
+        show_summary(
+            args.month,
+            args.year,
+            args.category,
+            data_file_path=args.data_file,
+        )
     elif args.command is None:
         parser.print_help()
 

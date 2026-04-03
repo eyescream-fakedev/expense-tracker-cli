@@ -1,8 +1,11 @@
 """Test the CLI module."""
 
+from pathlib import Path
+
 import pytest
 
 from expense_tracker.cli import main, show_summary
+from expense_tracker.storage import DatabaseManager
 
 
 def test_add_expense_with_category_cli(monkeypatch: pytest.MonkeyPatch):
@@ -12,7 +15,7 @@ def test_add_expense_with_category_cli(monkeypatch: pytest.MonkeyPatch):
     # - Create spy function:def spy_add_expense_cli(desc, date,category=None):
     calls = []
 
-    def spy_add_expense_cli(desc, amount, date, category=None):
+    def spy_add_expense_cli(desc, amount, date, category=None, data_file_path=None):
         calls.append(
             {
                 "description": desc,
@@ -48,7 +51,9 @@ def test_list_expenses_with_category_filter(monkeypatch: pytest.MonkeyPatch):
 
     call_args = {}
 
-    def spy_list_expenses_cli(month=None, year=None, category=None):
+    def spy_list_expenses_cli(
+        month=None, year=None, category=None, data_file_path=None
+    ):
         call_args["month"] = month
         call_args["year"] = year
         call_args["category"] = category
@@ -70,7 +75,7 @@ def test_sumary_with_category(monkeypatch: pytest.MonkeyPatch):
     # Arrange
     call_args = {}
 
-    def spy_show_summary(month, year, category):
+    def spy_show_summary(month, year, category, data_file_path=None):
         call_args["month"] = month
         call_args["year"] = year
         call_args["category"] = category
@@ -93,7 +98,7 @@ def test_delete_expense_routes_correctly(monkeypatch: pytest.MonkeyPatch):
     # Arrange
     call_args = {}
 
-    def spy_delete_expense_cli(expense_id):
+    def spy_delete_expense_cli(expense_id, data_file_path=None):
         call_args["expense_id"] = expense_id
 
     monkeypatch.setattr(
@@ -138,7 +143,7 @@ def test_list_expenses_accepts_valid_month_boundary(
     # Arrange
     call_args = {}
 
-    def spy_list_expenses(month=None, year=None, category=None):
+    def spy_list_expenses(month=None, year=None, category=None, data_file_path=None):
         call_args["month"] = month
         call_args["year"] = year
         call_args["category"] = category
@@ -180,6 +185,8 @@ def test_add_expense_rejects_invalid_date_format(
 
 
 def test_show_summary_raises_on_unexpected_error(monkeypatch: pytest.MonkeyPatch):
+    """Verify CLI raises on unexpected error."""
+
     # Arrange
     def raise_type_error():
         raise AttributeError("Unexpected error")
@@ -192,3 +199,24 @@ def test_show_summary_raises_on_unexpected_error(monkeypatch: pytest.MonkeyPatch
     # Act & Assert
     with pytest.raises(AttributeError):
         show_summary()
+
+
+def test_list_expenses_uses_custom_data_file(monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    call_args = {}
+    original_init = DatabaseManager.__init__
+
+    def spy_init(self, data_file_path: str):
+        call_args["data_file_path"] = data_file_path
+
+    monkeypatch.setattr("expense_tracker.cli.DatabaseManager.__init__", spy_init)
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: []
+    )
+    monkeypatch.setattr(
+        "sys.argv", ["expense_tracker", "list", "--data-file", "/tmp/test.json"]
+    )
+    # Act
+    main()
+    # Assert
+    assert call_args["data_file_path"] == Path("/tmp/test.json")
