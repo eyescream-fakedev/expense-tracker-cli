@@ -2,7 +2,7 @@
 
 import pytest
 
-from expense_tracker.cli import main
+from expense_tracker.cli import main, show_summary
 
 
 def test_add_expense_with_category_cli(monkeypatch: pytest.MonkeyPatch):
@@ -66,6 +66,7 @@ def test_list_expenses_with_category_filter(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_sumary_with_category(monkeypatch: pytest.MonkeyPatch):
+    """Test show_summary as a CLI command with a category filter."""
     # Arrange
     call_args = {}
 
@@ -85,3 +86,109 @@ def test_sumary_with_category(monkeypatch: pytest.MonkeyPatch):
     assert call_args["category"] == "Food"
     assert call_args["month"] is None
     assert call_args["year"] is None
+
+
+def test_delete_expense_routes_correctly(monkeypatch: pytest.MonkeyPatch):
+    """Test delete_expense as a CLI command with an expense ID."""
+    # Arrange
+    call_args = {}
+
+    def spy_delete_expense_cli(expense_id):
+        call_args["expense_id"] = expense_id
+
+    monkeypatch.setattr(
+        "expense_tracker.cli.delete_expense_cli",
+        spy_delete_expense_cli,
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "delete", "5"])
+    # Act
+    main()
+    # Assert
+    assert call_args["expense_id"] == 5
+
+
+def test_no_command_prints_help(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Test that no command prints the help message."""
+    # Arrange
+    monkeypatch.setattr("sys.argv", ["expense_tracker"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Expense Tracker CLI" in captured.out
+
+
+def test_list_expenses_rejects_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify CLI handles invalid month values gracefully."""
+    # Arrange
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list", "--month", "99"])
+
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()
+
+
+def test_list_expenses_accepts_valid_month_boundary(
+    capsys, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify CLI accepts valid month boundary values (1-12)."""
+    # Arrange
+    call_args = {}
+
+    def spy_list_expenses(month=None, year=None, category=None):
+        call_args["month"] = month
+        call_args["year"] = year
+        call_args["category"] = category
+
+    monkeypatch.setattr("expense_tracker.cli.list_expenses", spy_list_expenses)
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list", "--month", "12"])
+    # Act
+    main()
+    # Assert
+    assert call_args["month"] == 12
+
+
+def test_list_expenses_rejects_month_zero(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify CLI rejects month zero."""
+    # Arrange
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list", "--month", "0"])
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()
+
+
+def test_add_expense_rejects_invalid_date_format(
+    capsys, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify CLI rejects invalid date format."""
+    # Arrange
+
+    monkeypatch.setattr(
+        "sys.argv", ["expense_tracker", "add", "Lunch", "25", "2026/04/02"]
+    )
+
+    # Act and Assert
+    main()
+    captured = capsys.readouterr()
+    assert "error" in captured.out.lower()
+
+
+def test_show_summary_raises_on_unexpected_error(monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    def raise_type_error():
+        raise AttributeError("Unexpected error")
+
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses",
+        lambda self: raise_type_error(),
+    )
+
+    # Act & Assert
+    with pytest.raises(AttributeError):
+        show_summary()

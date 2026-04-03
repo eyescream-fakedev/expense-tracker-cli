@@ -1,4 +1,5 @@
 import argparse
+import json
 from pathlib import Path
 
 from expense_tracker.expenses import (
@@ -140,11 +141,39 @@ def show_summary(
         total = calculate_total(result)
         print(f"Total expenses: ${total:.2f}")
     except FileNotFoundError:
-        print("No expenses found.")
+        print("File missing.")
     except KeyError as error:
         print(f"Error: {error}")
-    except Exception as error:
+    except json.JSONDecodeError as error:
         print(f"Error: {error}")
+    except (ValueError, TypeError) as error:
+        print(f"Error: Invalid data {error}")
+
+
+def valid_month(value: str) -> int:
+    """
+    Validate and return a valid month as an integer (1-12).
+
+    Args:
+        value (str): The month value to validate.
+
+    Returns:
+        int: The validated month as an integer.
+
+    Raises:
+        argparse.ArgumentTypeError: If the value is not a valid month.
+    """
+    try:
+        month = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid month: {value}. Must be a number")
+
+    if month < 1 or month > 12:
+        raise argparse.ArgumentTypeError(
+            f"Invalid month: {value}. Must be between 1 and 12."
+        )
+
+    return month
 
 
 def main():
@@ -156,7 +185,7 @@ def main():
     # 3. Add "list" command
     list_parser = subparsers.add_parser("list", help="List all expenses")
     list_parser.add_argument("-y", "--year", type=int, help="Filter by year")
-    list_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    list_parser.add_argument("-m", "--month", type=valid_month, help="Filter by month")
     list_parser.add_argument("-c", "--category", type=str, help="Filter by category")
 
     # 4. Add "add" command
@@ -173,7 +202,9 @@ def main():
     # 6. Add "summary" command
     summary_parser = subparsers.add_parser("summary", help="Show summary expenses")
     summary_parser.add_argument("-y", "--year", type=int, help="Filter by year")
-    summary_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    summary_parser.add_argument(
+        "-m", "--month", type=valid_month, help="Filter by month"
+    )
     summary_parser.add_argument("-c", "--category", type=str, help="Filter by category")
 
     # 7. Parse arguments
