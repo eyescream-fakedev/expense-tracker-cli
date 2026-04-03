@@ -86,7 +86,7 @@ def add_expense(expenses: list[dict], new_expense: dict) -> list[dict]:
         raise ValueError("Date must be in YYYY-MM-DD format")
     if not new_expense["description"].strip():
         raise ValueError("Expense description must not be empty")
-    # - Check amount is greater than 0
+    # - Check amount is less than 1
     if new_expense["amount"] < 1:
         raise ValueError("Expense amount must be greater than 0")
 
@@ -130,6 +130,24 @@ def is_valid_date(date: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def filter_by_category(expenses: list[dict], category: str) -> list[dict]:
+    """
+    Filter expenses by category.
+
+    Args:
+        expenses (list[dict]): A list of expense dictionaries.
+        category (str): The category to filter by.
+
+    Returns:
+        list[dict]: A list of expenses that match the specified category.
+    """
+    result = []
+    for expense in expenses:
+        if expense.get("category") == category:
+            result.append(expense)
+    return result
 
 
 def _generate_next_id(expenses: list[dict]) -> int:

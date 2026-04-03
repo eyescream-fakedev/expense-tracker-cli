@@ -49,7 +49,9 @@ def list_expenses(month: int | None = None, year: int | None = None) -> None:
         print(f"Error: {error}")
 
 
-def add_expense_cli(description: str, amount: float, date: str) -> None:
+def add_expense_cli(
+    description: str, amount: float, date: str, category: str | None
+) -> None:
     """
     Add a new expense via CLI.
 
@@ -57,6 +59,7 @@ def add_expense_cli(description: str, amount: float, date: str) -> None:
         description (str): The expense description.
         amount (float): The expense amount.
         date (str): The expense date in YYYY-MM-DD format.
+        category (str | None): The expense category.
 
     """
     try:
@@ -69,6 +72,7 @@ def add_expense_cli(description: str, amount: float, date: str) -> None:
             "description": description,
             "amount": amount,
             "date": date,
+            "category": category,
         }
 
         # Use business logic to add expense
@@ -141,12 +145,14 @@ def main():
     list_parser = subparsers.add_parser("list", help="List all expenses")
     list_parser.add_argument("-y", "--year", type=int, help="Filter by year")
     list_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    list_parser.add_argument("-c", "--category", type=str, help="Filter by category")
 
     # 4. Add "add" command
     add_parser = subparsers.add_parser("add", help="Add a new expense")
     add_parser.add_argument("description", type=str, help="Expense description")
     add_parser.add_argument("amount", type=float, help="Expense amount")
     add_parser.add_argument("date", type=str, help="Expense date (YYYY-MM-DD)")
+    add_parser.add_argument("-c", "--category", type=str, help="Expense category")
 
     # 5. Add "delete" command
     delete_parser = subparsers.add_parser("delete", help="Delete an expense")
@@ -156,6 +162,7 @@ def main():
     summary_parser = subparsers.add_parser("summary", help="Show summary expenses")
     summary_parser.add_argument("-y", "--year", type=int, help="Filter by year")
     summary_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    summary_parser.add_argument("-c", "--category", type=str, help="Filter by category")
 
     # 7. Parse arguments
     args = parser.parse_args()
@@ -163,7 +170,7 @@ def main():
     if args.command == "list":
         list_expenses(month=args.month, year=args.year)
     elif args.command == "add":
-        add_expense_cli(args.description, args.amount, args.date)
+        add_expense_cli(args.description, args.amount, args.date, args.category)
     elif args.command == "delete":
         delete_expense_cli(args.expense_id)
     elif args.command == "summary":

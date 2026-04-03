@@ -255,3 +255,113 @@ def test_is_valid_data_returns_false_for_wrong_format():
     assert expense.is_valid_date("2026/02/01") is False  # Slashes
     assert expense.is_valid_date("02-01-2026") is False  # Day first
     assert expense.is_valid_date("March 1, 2026") is False  # Text
+
+
+def test_add_expense_with_category():
+    """Test that add_expense correctly adds an expense with a category."""
+    # Arrange
+    expenses = []
+    new_expense = {
+        "description": "Groceries",
+        "amount": 50.00,
+        "date": "2026-02-01",
+        "category": "Food",
+    }
+
+    # Act
+    result = expense.add_expense(expenses, new_expense)
+    # Assert
+    assert len(result) == 1
+    assert result[0]["category"] == "Food"
+
+
+def test_add_expense_without_category():
+    """Test that add_expense correctly adds an expense without a category."""
+    # Arrange
+    expenses = []
+    new_expense = {
+        "description": "Groceries",
+        "amount": 50.00,
+        "date": "2026-02-01",
+    }
+    # Act
+    result = expense.add_expense(expenses, new_expense)
+
+    # Assert
+    assert len(result) == 1
+    assert "category" not in result[0]
+
+
+def test_filter_by_category_returns_matching_expenses():
+    """Test that filter_by_category returns matching expenses by category."""
+    # Arrange
+    # - Create a list of 3-4 expenses with different 'categories'
+    expenses = [
+        {
+            "description": "Groceries",
+            "amount": 50.00,
+            "date": "2026-02-01",
+            "category": "Food",
+        },
+        {
+            "description": "Transport",
+            "amount": 20.00,
+            "date": "2026-02-02",
+            "category": "Transport",
+        },
+        {
+            "description": "Entertainment",
+            "amount": 10.00,
+            "date": "2026-02-03",
+            "category": "Entertainment",
+        },
+        {
+            "description": "Snacks",
+            "amount": 15.00,
+            "date": "2026-02-04",
+            "category": "Food",
+        },
+    ]
+    # Act
+    result = expense.filter_by_category(expenses, "Food")
+
+    # Assert
+    assert len(result) == 2
+    for item in result:
+        assert item.get("category") == "Food"
+
+
+def test_filter_by_category_with_no_match():
+    # Arrange
+    expenses = [
+        {
+            "description": "Groceries",
+            "amount": 50.00,
+            "date": "2026-02-01",
+            "category": "Food",
+        },
+        {
+            "description": "Transport",
+            "amount": 20.00,
+            "date": "2026-02-02",
+            "category": "Transport",
+        },
+        {
+            "description": "Entertainment",
+            "amount": 10.00,
+            "date": "2026-02-03",
+            "category": "Entertainment",
+        },
+        {
+            "description": "Snacks",
+            "amount": 15.00,
+            "date": "2026-02-04",
+            "category": "Food",
+        },
+    ]
+
+    # Act
+    result = expense.filter_by_category(expenses, "Utility")
+
+    # Assert
+    assert len(result) == 0
