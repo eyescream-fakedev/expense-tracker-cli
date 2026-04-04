@@ -332,6 +332,7 @@ def test_filter_by_category_returns_matching_expenses():
 
 
 def test_filter_by_category_with_no_match():
+    """Test that filter_by_category returns an empty list when no match is found."""
     # Arrange
     expenses = [
         {
@@ -365,3 +366,18 @@ def test_filter_by_category_with_no_match():
 
     # Assert
     assert len(result) == 0
+
+
+def test_add_expense_allows_less_than_one():
+    # Arrange
+    expenses = []
+    new_expenses = {
+        "description": "Coffee",
+        "amount": 0.50,
+        "date": "2026-04-02",
+    }
+    # Act
+    result = expense.add_expense(expenses, new_expenses)
+    # Assert
+    assert len(result) == 1
+    assert result[0]["amount"] == 0.50

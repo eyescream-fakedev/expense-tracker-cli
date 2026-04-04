@@ -28,7 +28,7 @@ class DatabaseManager:
         if not self.data_file_path.exists():
             return []
 
-        with open(self.data_file_path, "r") as file:
+        with open(self.data_file_path, "r", encoding="utf-8") as file:
             data = json.load(file)
             if not isinstance(data, list):
                 raise TypeError(f"Expected list, got {type(data).__name__}")
@@ -44,5 +44,5 @@ class DatabaseManager:
     def save_expenses(self, expenses: list[dict]) -> None:
         """Save expenses to JSON file (overwritten existing file.)"""
 
-        with open(self.data_file_path, "w") as file:
-            json.dump(expenses, file)
+        with open(self.data_file_path, "w", encoding="utf-8") as file:
+            json.dump(expenses, file, indent=2)

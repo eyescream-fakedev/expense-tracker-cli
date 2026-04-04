@@ -87,7 +87,7 @@ def add_expense(expenses: list[dict], new_expense: dict) -> list[dict]:
     if not new_expense["description"].strip():
         raise ValueError("Expense description must not be empty")
     # - Check amount is less than 1
-    if new_expense["amount"] < 1:
+    if new_expense["amount"] <= 0:
         raise ValueError("Expense amount must be greater than 0")
 
     new_expense_copy = new_expense.copy()

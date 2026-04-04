@@ -44,15 +44,20 @@ def list_expenses(
             result = filter_by_category(result, category)
 
         # print title with fixed-width column formatting
-        print(f"{'ID':<5} {'Date':<12} {'Description':<25} {'Amount':>10}")
-        print("-" * 45)
+        print(
+            f"{'ID':<5} {'Date':<12} {'Description':<25} {'Category':<15} {'Amount':>10}"
+        )
+        print("-" * 60)
         for expense in result:
+            category = expense.get("category", "")
             print(
-                f"{expense['id']:<5} {expense['date']:<12} {expense['description']:<25} ${expense['amount']:>8.2f}"
+                f"{expense['id']:<5} {expense['date']:<12} {expense['description']:<25} {category:<15} ${expense['amount']:>8.2f}"
             )
     except ValueError as error:
         print(f"Error: {error}")
     except KeyError as error:
+        print(f"Error: {error}")
+    except FileNotFoundError as error:
         print(f"Error: {error}")
 
 
@@ -97,6 +102,8 @@ def add_expense_cli(
         print(f"Error: {error}")
     except KeyError as error:
         print(f"Error: {error}")
+    except FileNotFoundError as error:
+        print(f"Error: {error}")
 
 
 def delete_expense_cli(
@@ -118,6 +125,8 @@ def delete_expense_cli(
     except ValueError as error:
         print(f"Error: {error}")
     except KeyError as error:
+        print(f"Error: {error}")
+    except FileNotFoundError as error:
         print(f"Error: {error}")
 
 

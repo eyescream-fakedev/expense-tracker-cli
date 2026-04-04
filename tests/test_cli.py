@@ -70,7 +70,7 @@ def test_list_expenses_with_category_filter(monkeypatch: pytest.MonkeyPatch):
     assert call_args["year"] is None
 
 
-def test_sumary_with_category(monkeypatch: pytest.MonkeyPatch):
+def test_summary_with_category(monkeypatch: pytest.MonkeyPatch):
     """Test show_summary as a CLI command with a category filter."""
     # Arrange
     call_args = {}
@@ -202,6 +202,7 @@ def test_show_summary_raises_on_unexpected_error(monkeypatch: pytest.MonkeyPatch
 
 
 def test_list_expenses_uses_custom_data_file(monkeypatch: pytest.MonkeyPatch):
+    """Verify CLI uses custom data file when specified."""
     # Arrange
     call_args = {}
     original_init = DatabaseManager.__init__
@@ -220,3 +221,51 @@ def test_list_expenses_uses_custom_data_file(monkeypatch: pytest.MonkeyPatch):
     main()
     # Assert
     assert call_args["data_file_path"] == Path("/tmp/test.json")
+
+
+def test_list_expenses_shows_category_column(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify list output includes category column."""
+    # Arrange
+    expense = [
+        {
+            "id": 1,
+            "description": "Test expense",
+            "amount": 100.0,
+            "category": "Test category",
+            "date": "2026-04-03",
+        }
+    ]
+
+    def spy_load_expenses(self):
+        return expense
+
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", spy_load_expenses
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Test category" in captured.out
+
+
+def test_list_expenses_handles_missing_file_gracefully(
+    capsys, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify list command gracefully handles a missing data file."""
+
+    # Arrange
+    def raise_file_not_found(self):
+        raise FileNotFoundError("No such file")
+
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", raise_file_not_found
+    )
+
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "error" in captured.out.lower()
