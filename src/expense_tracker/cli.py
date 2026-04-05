@@ -5,6 +5,7 @@ from pathlib import Path
 from expense_tracker.expenses import (
     add_expense,
     calculate_total,
+    check_budget_exceeded,
     delete_expense,
     export_to_csv,
     filter_by_category,
@@ -203,6 +204,45 @@ def show_summary(
         print(f"Error: Invalid data {error}")
 
 
+def budget_check_cli(
+    budget_amount: float,
+    month: int | None = None,
+    year: int | None = None,
+    category: str | None = None,
+    data_file_path: Path = DATA_FILE_PATH,
+) -> None:
+    try:
+        db_manager = DatabaseManager(data_file_path)
+        expenses = db_manager.load_expenses()
+        result = expenses
+
+        if month:
+            result = filter_by_month(result, month)
+        if year:
+            result = filter_by_year(result, year)
+        if category:
+            result = filter_by_category(result, category)
+
+        total_expenses = calculate_total(result)
+        if check_budget_exceeded(result, budget_amount):
+            print(
+                f"Budget exceeded: spent ${total_expenses:.2f} of ${budget_amount:.2f} budget"
+            )
+        else:
+            print(
+                f"Budget OK: ${total_expenses:.2f} spent of ${budget_amount:.2f} budget"
+            )
+
+    except FileNotFoundError:
+        print("File missing.")
+    except KeyError as error:
+        print(f"Error: {error}")
+    except json.JSONDecodeError as error:
+        print(f"Error: {error}")
+    except (ValueError, TypeError) as error:
+        print(f"Error: Invalid data {error}")
+
+
 def valid_month(value: str) -> int:
     """
     Validate and return a valid month as an integer (1-12).
@@ -323,9 +363,26 @@ def main():
         help="Path to expenses JSON file",
     )
 
-    # 8. Parse arguments
+    # 8. Add "budget" command
+    budget_parser = subparsers.add_parser(
+        "budget", help="Check budget against expenses"
+    )
+    budget_parser.add_argument(
+        "--amount", type=float, required=True, help="Budget amount"
+    )
+    budget_parser.add_argument("--month", type=valid_month, help="Filter by month")
+    budget_parser.add_argument("--year", type=valid_year, help="Filter by year")
+    budget_parser.add_argument("--category", type=str, help="Filter by category")
+    budget_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
+
+    # 9. Parse arguments
     args = parser.parse_args()
-    # 9. Call the right function
+    # 10. Call the right function
     if args.command == "list":
         list_expenses(
             month=args.month,
@@ -356,6 +413,14 @@ def main():
     elif args.command == "export":
         export_expenses_cli(
             output=args.output,
+            month=args.month,
+            year=args.year,
+            category=args.category,
+            data_file_path=args.data_file,
+        )
+    elif args.command == "budget":
+        budget_check_cli(
+            budget_amount=args.amount,
             month=args.month,
             year=args.year,
             category=args.category,

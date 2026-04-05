@@ -324,3 +324,18 @@ def test_export_command_creates_csv_file(monkeypatch: pytest.MonkeyPatch):
     lines = content.strip().split("\n")
     assert len(lines) == 1  # only header
     assert lines[0] == "id,date,description,category,amount"
+
+
+def test_budget_check_shows_exceeded_warning(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check shows an exceeded warning when expenses exceed the budget."""
+    # Arrange
+    expenses = [{"amount": 50.00}, {"amount": 50}, {"amount": 50}]
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: expenses
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Budget exceeded" in captured.out

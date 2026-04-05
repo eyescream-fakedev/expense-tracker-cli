@@ -168,6 +168,21 @@ def export_to_csv(expenses: list[dict], output_path: Path) -> None:
             file.write(",".join(row) + "\n")
 
 
+def check_budget_exceeded(expenses: list[dict], budget_amount: float) -> bool:
+    """
+    Check if the total expenses exceed the budget amount.
+
+    Args:
+        expenses (list[dict]): A list of expense dictionaries.
+        budget_amount (float): The budget amount to compare against.
+
+    Returns:
+        bool: True if the total expenses exceed the budget amount, False otherwise.
+    """
+    total_expenses = calculate_total(expenses)
+    return total_expenses > budget_amount
+
+
 def _generate_next_id(expenses: list[dict]) -> int:
     """
     Generate the next ID for a new expense.

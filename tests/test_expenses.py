@@ -381,3 +381,46 @@ def test_add_expense_allows_less_than_one():
     # Assert
     assert len(result) == 1
     assert result[0]["amount"] == 0.50
+
+
+def test_check_budget_exceeded_returns_true_when_over():
+    """Test that check_budget_exceeded returns True when the budget is exceeded."""
+    # Arrange
+    expenses = [
+        {"amount": 60},
+        {"amount": 50},
+    ]
+    budget_amount = 100
+
+    # Act
+    result = expense.check_budget_exceeded(expenses, budget_amount)
+    # Assert
+    assert result is True
+
+
+def test_check_budget_exceeded_return_false_when_under():
+    """Test that check_budget_exceeded returns False when the budget is not exceeded."""
+    # Arrange
+    expenses = [
+        {"amount": 50},
+        {"amount": 30},
+    ]
+    budget_amount = 100
+    # Act
+    result = expense.check_budget_exceeded(expenses, budget_amount)
+    # Assert
+    assert result is False
+
+
+def test_check_budget_exceeded_returns_false_when_exact():
+    """Test that check_budget_exceeded returns False when the budget is exactly met."""
+    # Arrange
+    expenses = [
+        {"amount": 50},
+        {"amount": 50},
+    ]
+    budget_amount = 100
+    # Act
+    result = expense.check_budget_exceeded(expenses, budget_amount)
+    # Assert
+    assert result is False
