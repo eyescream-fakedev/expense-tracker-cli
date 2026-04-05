@@ -5,7 +5,9 @@ from pathlib import Path
 import pytest
 
 from expense_tracker.cli import main, show_summary
-from expense_tracker.storage import DatabaseManager
+from expense_tracker.expenses import export_to_csv
+
+# from expense_tracker.storage import DatabaseManager
 
 
 def test_add_expense_with_category_cli(monkeypatch: pytest.MonkeyPatch):
@@ -205,7 +207,7 @@ def test_list_expenses_uses_custom_data_file(monkeypatch: pytest.MonkeyPatch):
     """Verify CLI uses custom data file when specified."""
     # Arrange
     call_args = {}
-    original_init = DatabaseManager.__init__
+    # original_init = DatabaseManager.__init__
 
     def spy_init(self, data_file_path: str):
         call_args["data_file_path"] = data_file_path
@@ -230,7 +232,7 @@ def test_list_expenses_shows_category_column(capsys, monkeypatch: pytest.MonkeyP
         {
             "id": 1,
             "description": "Test expense",
-            "amount": 100.0,
+            "amount": 100.00,
             "category": "Test category",
             "date": "2026-04-03",
         }
@@ -269,3 +271,56 @@ def test_list_expenses_handles_missing_file_gracefully(
     # Assert
     captured = capsys.readouterr()
     assert "error" in captured.out.lower()
+
+
+def test_export_to_csv_creates_file_with_expenses():
+    """Verify export_to_csv creates a CSV file with the correct content."""
+    # Arrange
+    expenses = [
+        {
+            "id": 1,
+            "description": "Test expense",
+            "amount": 100.00,
+            "category": "Test category",
+            "date": "2026-04-03",
+        },
+        {
+            "id": 2,
+            "description": "Another expense",
+            "amount": 50.00,
+            "category": "Another category",
+            "date": "2026-04-04",
+        },
+    ]
+
+    output_path = Path("/tmp/test_export.csv")
+    # Act
+    export_to_csv(expenses, output_path)
+    # Assert
+    assert output_path.exists()
+    content = output_path.read_text()
+    lines = content.strip().split("\n")
+    assert len(lines) == 3  # header + 2 expenses
+    assert lines[0] == "id,date,description,category,amount"
+    assert "Test expense" in lines[1]
+    assert "Another expense" in lines[2]
+
+
+def test_export_command_creates_csv_file(monkeypatch: pytest.MonkeyPatch):
+    """Verify export command creates a CSV file with the correct content."""
+    # Arrange
+    monkeypatch.setattr(
+        "sys.argv", ["expense_tracker", "export", "--output", "/tmp/test_export.csv"]
+    )
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: []
+    )
+    # Act
+    main()
+    # Assert
+    output_path = Path("/tmp/test_export.csv")
+    assert output_path.exists()
+    content = output_path.read_text()
+    lines = content.strip().split("\n")
+    assert len(lines) == 1  # only header
+    assert lines[0] == "id,date,description,category,amount"

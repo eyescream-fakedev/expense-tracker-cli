@@ -1,6 +1,7 @@
 """Business logic for expense operations."""
 
 from datetime import datetime
+from pathlib import Path
 
 
 def calculate_total(expenses: list[dict]) -> float:
@@ -148,6 +149,23 @@ def filter_by_category(expenses: list[dict], category: str) -> list[dict]:
         if expense.get("category") == category:
             result.append(expense)
     return result
+
+
+def export_to_csv(expenses: list[dict], output_path: Path) -> None:
+    """
+    Export expenses to a CSV file.
+
+    Args:
+        expenses (list[dict]): A list of expense dictionaries.
+        output_path (Path): The path to the output CSV file.
+    """
+
+    with open(output_path, "w", encoding="utf-8") as file:
+        header = ["id", "date", "description", "category", "amount"]
+        file.write(",".join(header) + "\n")
+        for expense in expenses:
+            row = [str(expense.get(key, "")) for key in header]
+            file.write(",".join(row) + "\n")
 
 
 def _generate_next_id(expenses: list[dict]) -> int:

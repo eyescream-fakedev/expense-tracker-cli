@@ -6,6 +6,7 @@ from expense_tracker.expenses import (
     add_expense,
     calculate_total,
     delete_expense,
+    export_to_csv,
     filter_by_category,
     filter_by_month,
     filter_by_year,
@@ -130,6 +131,40 @@ def delete_expense_cli(
         print(f"Error: {error}")
 
 
+def export_expenses_cli(
+    output: Path,
+    month: int | None = None,
+    year: int | None = None,
+    category: str | None = None,
+    data_file_path: Path = DATA_FILE_PATH,
+) -> None:
+    """
+    Export expenses to a CSV file.
+
+    Args:
+        output (Path): The path to the output CSV file.
+        month (int | None): The month to filter by, or None to list all months.
+        year (int | None): The year to filter by, or None to list all years.
+        category (str | None): The category to filter by, or None to list all categories.
+    """
+    try:
+        db_manager = DatabaseManager(data_file_path)
+        expenses = db_manager.load_expenses()
+        result = expenses
+
+        if year:
+            result = filter_by_year(result, year)
+        if month:
+            result = filter_by_month(result, month)
+        if category:
+            result = filter_by_category(result, category)
+
+        export_to_csv(result, output)
+        print(f"Exported expenses to {output}")
+    except FileNotFoundError as error:
+        print(f"Error: {error}")
+
+
 def show_summary(
     month: int | None = None,
     year: int | None = None,
@@ -249,9 +284,29 @@ def main():
         help="Path to expenses JSON file",
     )
 
-    # 7. Parse arguments
+    # 7. Add "export" command
+    export_parser = subparsers.add_parser("export", help="Export expenses to CSV")
+    export_parser.add_argument(
+        "-o", "--output", type=Path, required=True, help="Output CSV file path"
+    )
+    export_parser.add_argument("-y", "--year", type=int, help="Filter by year")
+    export_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    export_parser.add_argument(
+        "-c",
+        "--category",
+        type=str,
+        help="Filter by category",
+    )
+    export_parser.add_argument(
+        "--data-file",
+        type=Path,
+        default=DATA_FILE_PATH,
+        help="Path to expenses JSON file",
+    )
+
+    # 8. Parse arguments
     args = parser.parse_args()
-    # 8. Call the right function
+    # 9. Call the right function
     if args.command == "list":
         list_expenses(
             month=args.month,
@@ -277,6 +332,14 @@ def main():
             args.month,
             args.year,
             args.category,
+            data_file_path=args.data_file,
+        )
+    elif args.command == "export":
+        export_expenses_cli(
+            output=args.output,
+            month=args.month,
+            year=args.year,
+            category=args.category,
             data_file_path=args.data_file,
         )
     elif args.command is None:

@@ -118,6 +118,16 @@ python -m expense_tracker.cli list --data-file /path/to/expenses.json
 python -m expense_tracker.cli add "Lunch" 20 2026-04-01 --data-file ./my-data.json
 ```
 
+### Export Expenses to CSV
+```bash
+# Export all expenses
+python -m expense_tracker.cli export --output expenses.csv
+
+# Export with filters
+python -m expense_tracker.cli export --output april-food.csv --month 4 --category "Food"
+python -m expense_tracker.cli export --output 2026-expenses.csv --year 2026
+```
+
 ## Running Tests
 
 ```bash
