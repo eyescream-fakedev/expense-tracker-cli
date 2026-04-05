@@ -229,6 +229,23 @@ def valid_month(value: str) -> int:
     return month
 
 
+def valid_year(value: str) -> int:
+    """
+    Validate and return a valid year as an integer.
+
+    Args:
+        value (str): The year value to validate.
+
+    Returns:
+        int: The validated year as an integer.
+    """
+    try:
+        year = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid year: {value}. Must be a number")
+    return year
+
+
 def main():
     """Expense Tracker CLI"""
     # 1. Create parser
@@ -237,7 +254,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     # 3. Add "list" command
     list_parser = subparsers.add_parser("list", help="List all expenses")
-    list_parser.add_argument("-y", "--year", type=int, help="Filter by year")
+    list_parser.add_argument("-y", "--year", type=valid_year, help="Filter by year")
     list_parser.add_argument("-m", "--month", type=valid_month, help="Filter by month")
     list_parser.add_argument("-c", "--category", type=str, help="Filter by category")
     list_parser.add_argument(
@@ -272,7 +289,7 @@ def main():
 
     # 6. Add "summary" command
     summary_parser = subparsers.add_parser("summary", help="Show summary expenses")
-    summary_parser.add_argument("-y", "--year", type=int, help="Filter by year")
+    summary_parser.add_argument("-y", "--year", type=valid_year, help="Filter by year")
     summary_parser.add_argument(
         "-m", "--month", type=valid_month, help="Filter by month"
     )
@@ -289,8 +306,10 @@ def main():
     export_parser.add_argument(
         "-o", "--output", type=Path, required=True, help="Output CSV file path"
     )
-    export_parser.add_argument("-y", "--year", type=int, help="Filter by year")
-    export_parser.add_argument("-m", "--month", type=int, help="Filter by month")
+    export_parser.add_argument("-y", "--year", type=valid_year, help="Filter by year")
+    export_parser.add_argument(
+        "-m", "--month", type=valid_month, help="Filter by month"
+    )
     export_parser.add_argument(
         "-c",
         "--category",
