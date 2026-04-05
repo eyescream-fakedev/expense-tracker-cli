@@ -140,6 +140,7 @@ def test_add_expense_rejects_negative_amount():
 
 def test_add_expense_rejects_empty_description():
     """Test that adding an expense with an empty description raises a ValueError."""
+    # Arrange
     expenses = [
         {"description": "Groceries", "amount": 100.0, "date": "2026-02-01"},
         {"description": "Dinner", "amount": 50.0, "date": "2026-02-14"},
@@ -150,13 +151,14 @@ def test_add_expense_rejects_empty_description():
         "amount": 30.0,
         "date": "2026-02-28",
     }
-
+    # Act & Arrange
     with pytest.raises(ValueError):
         expense.add_expense(expenses, new_expense)
 
 
 def test_add_expense_rejects_zero_amount():
     """Test that adding an expense with a zero amount raises a ValueError."""
+    # Arrange
     expenses = [
         {"description": "Groceries", "amount": 100.0, "date": "2026-02-01"},
         {"description": "Dinner", "amount": 50.0, "date": "2026-02-14"},
@@ -167,13 +169,14 @@ def test_add_expense_rejects_zero_amount():
         "amount": 0.0,
         "date": "2026-02-28",
     }
-
+    # Act & Arrange
     with pytest.raises(ValueError):
         expense.add_expense(expenses, new_expense)
 
 
 def test_add_expense_missing_key():
     """Test that adding an expense with a missing key raises a KeyError."""
+    # Arrange
     expenses = [
         {"description": "Groceries", "amount": 100.0, "date": "2026-02-01"},
         {"description": "Dinner", "amount": 50.0, "date": "2026-02-14"},
@@ -183,7 +186,7 @@ def test_add_expense_missing_key():
         "description": "Lunch",
         "amount": 30.0,
     }
-
+    # Act & Assert
     with pytest.raises(KeyError):
         expense.add_expense(expenses, new_expense)
 
@@ -369,6 +372,7 @@ def test_filter_by_category_with_no_match():
 
 
 def test_add_expense_allows_less_than_one():
+    """Verify add_expense allows expenses with amounts less than 1."""
     # Arrange
     expenses = []
     new_expenses = {

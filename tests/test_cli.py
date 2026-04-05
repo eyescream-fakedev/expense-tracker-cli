@@ -339,3 +339,94 @@ def test_budget_check_shows_exceeded_warning(capsys, monkeypatch: pytest.MonkeyP
     # Assert
     captured = capsys.readouterr()
     assert "Budget exceeded" in captured.out
+
+
+def test_budget_check_shows_ok_message(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check shows an OK message when expenses are within the budget."""
+    # Arrange
+    expenses = [{"amount": 50.00}, {"amount": 50}]
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: expenses
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Budget OK" in captured.out
+
+
+def test_budget_check_with_month_filter(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check with month filter shows an OK message when expenses are within the budget for the given month."""
+    # Arrange
+    expenses = [
+        {"amount": 200, "date": "2026-01-15"},
+        {"amount": 30, "date": "2026-02-10"},
+    ]
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: expenses
+    )
+    monkeypatch.setattr(
+        "sys.argv", ["expense_tracker", "budget", "--amount", "100", "--month", "2"]
+    )
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Budget OK" in captured.out
+
+
+def test_budget_check_with_empty_expenses(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check with empty expenses shows an OK message with zero spend."""
+    # Arrange
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: []
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Budget OK" in captured.out
+    assert "$0.00 spent" in captured.out
+
+
+def test_budget_check_handles_missing_file(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check handles missing file gracefully."""
+
+    # Arrange
+    def raise_file_not_found(self):
+        raise FileNotFoundError("No such file")
+
+    # Monkeypatch load_expenses to raise FileNotFoundError
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", raise_file_not_found
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "File missing" in captured.out
+
+
+def test_budget_check_with_category_filter(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify budget check with category filter works correctly."""
+    # Arrange
+    expenses = [
+        {"category": "Food", "amount": 200.0},
+        {"category": "Transport", "amount": 30.0},
+    ]
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: expenses
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "budget", "--amount", "100", "--category", "Transport"],
+    )
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Budget OK" in captured.out
+    assert "$30.00 spent" in captured.out
