@@ -493,6 +493,7 @@ def test_export_rejects_invalid_year(capsys, monkeypatch: pytest.MonkeyPatch):
 
 
 def test_budget_reject_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify the budget command rejects an invalid month."""
     # Arrange
     monkeypatch.setattr(
         "sys.argv", ["expense_tracker", "budget", "--amount", "100", "--month", "13"]
