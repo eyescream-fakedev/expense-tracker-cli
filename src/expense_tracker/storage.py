@@ -48,6 +48,6 @@ class DatabaseManager:
         Args:
             expenses (list[dict]): List of expense dictionaries to save
         """
-
+        self.data_file_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.data_file_path, "w", encoding="utf-8") as file:
             json.dump(expenses, file, indent=2)

@@ -221,8 +221,7 @@ expense-tracker-cli/
 │       ├── __init__.py
 │       ├── cli.py           # CLI layer (user interface)
 │       ├── expenses.py      # Business logic layer
-│       ├── storage.py       # Data access layer
-│       └── expenses.json    # Data file
+│       └── storage.py       # Data access layer
 ├── tests/
 │   ├── conftest.py          # Pytest configuration
 │   ├── test_cli.py          # CLI layer tests
@@ -233,6 +232,8 @@ expense-tracker-cli/
 ├── README.md
 ├── requirements.txt
 └── setup.py
+
+Default data file: ~/.expense-tracker/expenses.json (created automatically)
 ```
 
 ## Architecture
