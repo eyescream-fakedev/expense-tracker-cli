@@ -8,6 +8,7 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ Filter expenses by month, year, and **category**
 - ✅ View summary totals (with optional filtering)
 - ✅ **Export to CSV** (with filtering support)
+- ✅ **Budget checking** (with filtering support)
 - ✅ **Custom data file path** (`--data-file`)
 - ✅ **Month validation** (1-12 range)
 - ✅ Date validation (YYYY-MM-DD format)
@@ -15,7 +16,7 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ Description validation (cannot be empty)
 - ✅ **Optional categories** (free-text)
 - ✅ JSON file storage
-- ✅ **43 automated tests** (CLI, business logic, storage)
+- ✅ **47 automated tests** (CLI, business logic, storage)
 
 ## Installation
 
@@ -127,6 +128,21 @@ python -m expense_tracker.cli export --output expenses.csv
 # Export with filters
 python -m expense_tracker.cli export --output april-food.csv --month 4 --category "Food"
 python -m expense_tracker.cli export --output 2026-expenses.csv --year 2026
+```
+
+### Check Budget Status
+```bash
+# Check if expenses exceed budget
+python -m expense_tracker.cli budget --amount 500
+
+# Check budget for specific month
+python -m expense_tracker.cli budget --amount 200 --month 4
+
+# Check budget for specific category
+python -m expense_tracker.cli budget --amount 100 --category "Food"
+
+# Check budget for specific year and month
+python -m expense_tracker.cli budget --amount 1000 --year 2026 --month 4
 ```
 
 ## Running Tests
