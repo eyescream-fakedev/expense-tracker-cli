@@ -1,5 +1,8 @@
 """Test cases for the expenses module."""
 
+import csv
+from pathlib import Path
+
 import pytest
 
 import expense_tracker.expenses as expense
@@ -428,3 +431,30 @@ def test_check_budget_exceeded_returns_false_when_exact():
     result = expense.check_budget_exceeded(expenses, budget_amount)
     # Assert
     assert result is False
+
+
+def test_export_to_csv_handles_commas_in_description():
+    """Test that export_to_csv handles commas in the description field correctly."""
+    # Arrange
+    expenses = [
+        {
+            "id": 1,
+            "date": "2026-04-01",
+            "description": "Lunch, with extra",
+            "category": "Food",
+            "amount": 20.00,
+        }
+    ]
+    ouput_path = Path("/tmp/test_csv_safety.csv")
+    # Act
+    expense.export_to_csv(expenses, ouput_path)
+    # Assert
+    # - FIle exists
+    # - Read it back with csv.reader
+    # - Description filed contains the comma correctly (not split into mulitple columns)
+    assert ouput_path.exists()
+    with open(ouput_path, "r") as f:
+        reader = csv.reader(f)
+        next(reader)
+        row = next(reader)
+        assert row[2] == "Lunch, with extra"

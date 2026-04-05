@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from expense_tracker.cli import main, show_summary
+from expense_tracker.cli import DATA_FILE_PATH, main, show_summary
 from expense_tracker.expenses import export_to_csv
 
 # from expense_tracker.storage import DatabaseManager
@@ -266,9 +266,11 @@ def test_list_expenses_handles_missing_file_gracefully(
     )
 
     monkeypatch.setattr("sys.argv", ["expense_tracker", "list"])
-    # Act
-    main()
-    # Assert
+    # Act & Assert
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "error" in captured.out.lower()
 
@@ -403,9 +405,11 @@ def test_budget_check_handles_missing_file(capsys, monkeypatch: pytest.MonkeyPat
         "expense_tracker.cli.DatabaseManager.load_expenses", raise_file_not_found
     )
     monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
-    # Act
-    main()
-    # Assert
+    # Act & Assert
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "File missing" in captured.out
 
@@ -430,3 +434,71 @@ def test_budget_check_with_category_filter(capsys, monkeypatch: pytest.MonkeyPat
     captured = capsys.readouterr()
     assert "Budget OK" in captured.out
     assert "$30.00 spent" in captured.out
+
+
+def test_default_data_file_path_is_user_writable():
+    """Verify the default data file path is user-writable."""
+    # Assert
+    assert ".expense-tracker" in str(DATA_FILE_PATH)
+    assert str(Path.home()) in str(DATA_FILE_PATH)
+
+
+def test_budget_check_exits_with_error_on_missing_file(monkeypatch: pytest.MonkeyPatch):
+    """Verify the budget check exits with an error when the file is missing."""
+
+    # Arrange
+    def raise_file_not_found(self):
+        raise FileNotFoundError("No such file")
+
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", raise_file_not_found
+    )
+
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
+
+    # Act & Assert
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+
+    assert exc_info.value.code == 1
+
+
+def test_export_rejects_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify the export command rejects an invalid month."""
+    # Arrange
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "export", "--output", "/tmp/test.csv", "--month", "99"],
+    )
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()
+
+
+def test_export_rejects_invalid_year(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify the export command rejects an invalid year."""
+    # Arrange
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "export", "--output", "/tmp/test.csv", "--year", "abc"],
+    )
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()
+
+
+def test_budget_reject_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
+    # Arrange
+    monkeypatch.setattr(
+        "sys.argv", ["expense_tracker", "budget", "--amount", "100", "--month", "13"]
+    )
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()

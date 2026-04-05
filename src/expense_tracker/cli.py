@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from expense_tracker.expenses import (
@@ -14,8 +15,8 @@ from expense_tracker.expenses import (
 )
 from expense_tracker.storage import DatabaseManager
 
-SCRIPT_DIR = Path(__file__).parent
-DATA_FILE_PATH = SCRIPT_DIR / "expenses.json"
+DATA_DIR = Path.home() / ".expense-tracker"
+DATA_FILE_PATH = DATA_DIR / "expenses.json"
 
 
 def list_expenses(
@@ -61,6 +62,7 @@ def list_expenses(
         print(f"Error: {error}")
     except FileNotFoundError as error:
         print(f"Error: {error}")
+        sys.exit(1)
 
 
 def add_expense_cli(
@@ -106,6 +108,7 @@ def add_expense_cli(
         print(f"Error: {error}")
     except FileNotFoundError as error:
         print(f"Error: {error}")
+        sys.exit(1)
 
 
 def delete_expense_cli(
@@ -130,6 +133,7 @@ def delete_expense_cli(
         print(f"Error: {error}")
     except FileNotFoundError as error:
         print(f"Error: {error}")
+        sys.exit(1)
 
 
 def export_expenses_cli(
@@ -164,6 +168,7 @@ def export_expenses_cli(
         print(f"Exported expenses to {output}")
     except FileNotFoundError as error:
         print(f"Error: {error}")
+        sys.exit(1)
 
 
 def show_summary(
@@ -195,7 +200,8 @@ def show_summary(
         total = calculate_total(result)
         print(f"Total expenses: ${total:.2f}")
     except FileNotFoundError:
-        print("File missing.")
+        print("Error: File missing.")
+        sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
     except json.JSONDecodeError as error:
@@ -211,6 +217,16 @@ def budget_check_cli(
     category: str | None = None,
     data_file_path: Path = DATA_FILE_PATH,
 ) -> None:
+    """
+    Checks if the budget is exceeded based on the given criteria.
+
+    Args:
+        budget_amount (float): The budget amount to compare against.
+        month (int | None): The month to filter expenses by.
+        year (int | None): The year to filter expenses by.
+        category (str | None): The category to filter expenses by.
+        data_file_path (Path): The path to the data file.
+    """
     try:
         db_manager = DatabaseManager(data_file_path)
         expenses = db_manager.load_expenses()
@@ -234,7 +250,8 @@ def budget_check_cli(
             )
 
     except FileNotFoundError:
-        print("File missing.")
+        print("Error: File missing.")
+        sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
     except json.JSONDecodeError as error:
@@ -288,6 +305,8 @@ def valid_year(value: str) -> int:
 
 def main():
     """Expense Tracker CLI"""
+    DATA_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     # 1. Create parser
     parser = argparse.ArgumentParser(description="Expense Tracker CLI")
     # 2. Add subcommands (list,delete,etc.)

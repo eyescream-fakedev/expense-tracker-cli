@@ -7,16 +7,19 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ Add, delete, and list expenses
 - ✅ Filter expenses by month, year, and **category**
 - ✅ View summary totals (with optional filtering)
-- ✅ **Export to CSV** (with filtering support)
+- ✅ **Export to CSV** (with filtering support, comma-safe)
 - ✅ **Budget checking** (with filtering support)
 - ✅ **Custom data file path** (`--data-file`)
+- ✅ **User-writable default location** (`~/.expense-tracker/expenses.json`)
 - ✅ **Month validation** (1-12 range)
+- ✅ **Year validation** (numeric only)
 - ✅ Date validation (YYYY-MM-DD format)
 - ✅ Amount validation (must be positive)
 - ✅ Description validation (cannot be empty)
 - ✅ **Optional categories** (free-text)
-- ✅ JSON file storage
-- ✅ **47 automated tests** (CLI, business logic, storage)
+- ✅ JSON file storage (UTF-8, pretty-printed)
+- ✅ **Proper error exit codes** (for scripting/automation)
+- ✅ **58 automated tests** (CLI, business logic, storage)
 
 ## Installation
 
@@ -163,7 +166,18 @@ python -m pytest tests/test_storage.py -v
 
 Expenses are stored in a JSON file located at:
 ```
-src/expense_tracker/expenses.json
+~/.expense-tracker/expenses.json
+```
+
+### Default Location
+By default, expenses are stored in a user-writable directory (`~/.expense-tracker/`).
+The directory is created automatically on first use.
+
+### Custom Data File
+You can override the default location with `--data-file`:
+```bash
+python -m expense_tracker.cli list --data-file /path/to/custom.json
+python -m expense_tracker.cli add "Lunch" 20 2026-04-01 --data-file ./my-data.json
 ```
 
 ### Data Format
