@@ -58,8 +58,10 @@ def list_expenses(
             )
     except ValueError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except FileNotFoundError as error:
         print(f"Error: {error}")
         sys.exit(1)
@@ -104,8 +106,10 @@ def add_expense_cli(
         print(f"Added expense: {description} - ${amount:.2f}")
     except ValueError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except FileNotFoundError as error:
         print(f"Error: {error}")
         sys.exit(1)
@@ -129,8 +133,10 @@ def delete_expense_cli(
         print(f"Deleted expense with ID {expense_id}")
     except ValueError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except FileNotFoundError as error:
         print(f"Error: {error}")
         sys.exit(1)
@@ -204,10 +210,13 @@ def show_summary(
         sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except json.JSONDecodeError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except (ValueError, TypeError) as error:
         print(f"Error: Invalid data {error}")
+        sys.exit(1)
 
 
 def budget_check_cli(
@@ -254,10 +263,13 @@ def budget_check_cli(
         sys.exit(1)
     except KeyError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except json.JSONDecodeError as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except (ValueError, TypeError) as error:
         print(f"Error: Invalid data {error}")
+        sys.exit(1)
 
 
 def valid_month(value: str) -> int:
@@ -301,6 +313,28 @@ def valid_year(value: str) -> int:
     except ValueError:
         raise argparse.ArgumentTypeError(f"Invalid year: {value}. Must be a number")
     return year
+
+
+def valid_positive_amount(value: str) -> float:
+    """
+    Validate and return a positive amount as a float.
+
+    Args:
+        value (str): The amount value to validate.
+
+    Returns:
+        float: The validated positive amount as a float.
+    """
+    try:
+        amount = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid amount: {value}. Must be a number.")
+
+    if amount <= 0:
+        raise argparse.ArgumentTypeError(
+            f"Invalid budget amount: {value}. Must be greater than 0."
+        )
+    return amount
 
 
 def main():
@@ -387,7 +421,7 @@ def main():
         "budget", help="Check budget against expenses"
     )
     budget_parser.add_argument(
-        "--amount", type=float, required=True, help="Budget amount"
+        "--amount", type=valid_positive_amount, required=True, help="Budget amount"
     )
     budget_parser.add_argument("--month", type=valid_month, help="Filter by month")
     budget_parser.add_argument("--year", type=valid_year, help="Filter by year")

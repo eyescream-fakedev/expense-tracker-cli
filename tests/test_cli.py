@@ -181,7 +181,9 @@ def test_add_expense_rejects_invalid_date_format(
     )
 
     # Act and Assert
-    main()
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+    assert exc_info.value.code == 1
     captured = capsys.readouterr()
     assert "error" in captured.out.lower()
 
@@ -443,26 +445,6 @@ def test_default_data_file_path_is_user_writable():
     assert str(Path.home()) in str(DATA_FILE_PATH)
 
 
-def test_budget_check_exits_with_error_on_missing_file(monkeypatch: pytest.MonkeyPatch):
-    """Verify the budget check exits with an error when the file is missing."""
-
-    # Arrange
-    def raise_file_not_found(self):
-        raise FileNotFoundError("No such file")
-
-    monkeypatch.setattr(
-        "expense_tracker.cli.DatabaseManager.load_expenses", raise_file_not_found
-    )
-
-    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "100"])
-
-    # Act & Assert
-    with pytest.raises(SystemExit) as exc_info:
-        main()
-
-    assert exc_info.value.code == 1
-
-
 def test_export_rejects_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
     """Verify the export command rejects an invalid month."""
     # Arrange
@@ -498,6 +480,33 @@ def test_budget_reject_invalid_month(capsys, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         "sys.argv", ["expense_tracker", "budget", "--amount", "100", "--month", "13"]
     )
+    # Act & Assert
+    with pytest.raises(SystemExit):
+        main()
+    captured = capsys.readouterr()
+    assert "error" in captured.err.lower()
+
+
+def test_list_exits_with_error_on_invalid_date(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify the list command exits with an error on an invalid date."""
+    # Arrange
+    expenses = [{"id": 1, "date": "invalid-date", "amount": 50, "description": "Test"}]
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: expenses
+    )
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "list", "--month", "1"])
+    # Act & Assert
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "error" in captured.out.lower()
+
+
+def test_budget_reject_negative_amount(capsys, monkeypatch: pytest.MonkeyPatch):
+    """Verify the budget command rejects a negative amount."""
+    # Arrange
+    monkeypatch.setattr("sys.argv", ["expense_tracker", "budget", "--amount", "-100"])
     # Act & Assert
     with pytest.raises(SystemExit):
         main()

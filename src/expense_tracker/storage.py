@@ -6,7 +6,7 @@ from pathlib import Path
 
 class DatabaseManager:
     """
-    DatabaseManager class handles read,save,update and delete data.
+    DatabaseManager class handles load and save JSON file.
 
     Properties:
         self.data_file_path: Path - file path of data
@@ -42,7 +42,12 @@ class DatabaseManager:
         return data
 
     def save_expenses(self, expenses: list[dict]) -> None:
-        """Save expenses to JSON file (overwritten existing file.)"""
+        """
+        Save expenses to JSON file (overwritten existing file.)
+
+        Args:
+            expenses (list[dict]): List of expense dictionaries to save
+        """
 
         with open(self.data_file_path, "w", encoding="utf-8") as file:
             json.dump(expenses, file, indent=2)

@@ -8,18 +8,19 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ Filter expenses by month, year, and **category**
 - ✅ View summary totals (with optional filtering)
 - ✅ **Export to CSV** (with filtering support, comma-safe)
-- ✅ **Budget checking** (with filtering support)
+- ✅ **Budget checking** (with filtering support, positive amount validation)
 - ✅ **Custom data file path** (`--data-file`)
 - ✅ **User-writable default location** (`~/.expense-tracker/expenses.json`)
 - ✅ **Month validation** (1-12 range)
 - ✅ **Year validation** (numeric only)
+- ✅ **Budget amount validation** (must be positive)
 - ✅ Date validation (YYYY-MM-DD format)
 - ✅ Amount validation (must be positive)
 - ✅ Description validation (cannot be empty)
 - ✅ **Optional categories** (free-text)
 - ✅ JSON file storage (UTF-8, pretty-printed)
-- ✅ **Proper error exit codes** (for scripting/automation)
-- ✅ **58 automated tests** (CLI, business logic, storage)
+- ✅ **Consistent error exit codes** (for scripting/automation)
+- ✅ **59 automated tests** (CLI, business logic, storage)
 
 ## Installation
 
@@ -148,6 +149,8 @@ python -m expense_tracker.cli budget --amount 100 --category "Food"
 python -m expense_tracker.cli budget --amount 1000 --year 2026 --month 4
 ```
 
+**Note:** Budget amount must be a positive number. Negative or zero values are rejected.
+
 ## Running Tests
 
 ```bash
@@ -160,6 +163,22 @@ python -m pytest tests/ -v
 # Run specific test files
 python -m pytest tests/test_expenses.py -v
 python -m pytest tests/test_storage.py -v
+```
+
+## Scripting & Automation
+
+All CLI commands return proper exit codes:
+- **Exit 0**: Success
+- **Exit 1**: Error (invalid input, missing file, validation failure)
+
+This makes the CLI safe for use in scripts and CI/CD pipelines:
+```bash
+# Example: Check budget in a script
+python -m expense_tracker.cli budget --amount 500
+if [ $? -ne 0 ]; then
+    echo "Budget check failed!"
+    exit 1
+fi
 ```
 
 ## Data Storage
