@@ -512,3 +512,161 @@ def test_budget_reject_negative_amount(capsys, monkeypatch: pytest.MonkeyPatch):
         main()
     captured = capsys.readouterr()
     assert "error" in captured.err.lower()
+
+
+def test_recurring_add_command_saves_template(monkeypatch: pytest.MonkeyPatch):
+    """Verify the recurring add command saves a template expense."""
+    # Arrange
+    # - Spy on DatabaseManager.save_expenses (to capture the save call)
+    save_calls = []
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.save_expenses",
+        lambda self, expenses: save_calls.append(expenses),
+    )
+    # - Monkeypatch load_expenses to return [] (start empty)
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses", lambda self: []
+    )
+    # - Monkeypatch sys.argv:
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "expense_tracker",
+            "recurring",
+            "add",
+            "Rent",
+            "1000",
+            "--frequency",
+            "monthly",
+            "--start-date",
+            "2026-01-01",
+        ],
+    )
+
+    # Act
+    main()
+    # Assert
+    # - save_expense was called once
+    assert len(save_calls) == 1
+    # - the saved expense has the correct fields
+    expense = save_calls[0][0]
+    assert expense["description"] == "Rent"
+    assert expense["amount"] == 1000
+    assert expense["frequency"] == "monthly"
+    assert expense["start_date"] == "2026-01-01"
+
+
+def test_recurring_generate_command_saves_expenses(monkeypatch: pytest.MonkeyPatch):
+    """Verify the recurring generate command saves generated expenses."""
+    # Arrange
+    save_calls = []
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.save_expenses",
+        lambda self, data: save_calls.append(data),
+    )
+    #  - Monkeypatch load_expenses to return a list with a DUE recurring template
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses",
+        lambda self: [
+            {
+                "id": 1,
+                "description": "Rent",
+                "amount": 1000,
+                "frequency": "monthly",
+                "start_date": "2026-04-01",
+                "next_due_date": "2026-04-01",
+                "category": "Housing",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "recurring", "generate"],
+    )
+
+    # Act
+    main()
+    # Assert
+    assert len(save_calls) == 2
+    found_generated_expense = False
+    for saved_list in save_calls:
+        for item in saved_list:
+            if item.get("description") == "Rent" and item.get("amount") == 1000:
+                if "date" in item and "frequency" not in item:
+                    found_generated_expense = True
+                    break
+
+    assert found_generated_expense
+
+
+def test_recurring_list_command_shows_templates(
+    capsys,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Test that the recurring list command shows the correct templates."""
+    # Arrange
+    # - Spy on DatabaseManager.load_expenses (return 1 template)
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses",
+        lambda self: [
+            {
+                "id": 1,
+                "description": "Rent",
+                "amount": 1000,
+                "frequency": "monthly",
+                "start_date": "2026-04-01",
+                "next_due_date": "2026-04-01",
+                "category": "Housing",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "recurring", "list"],
+    )
+
+    # Act
+    main()
+    # Assert
+    captured = capsys.readouterr()
+    assert "Rent" in captured.out
+    assert "1000" in captured.out
+    assert "monthly" in captured.out
+
+
+def test_recurring_delete_command_removes_template(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Test that the recurring delete command removes the correct template."""
+    # Arrange
+    # - Spy on save_expenses
+    save_calls = []
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.save_expenses",
+        lambda self, expenses: save_calls.append(expenses),
+    )
+    monkeypatch.setattr(
+        "expense_tracker.cli.DatabaseManager.load_expenses",
+        lambda self: [
+            {
+                "id": 1,
+                "description": "Rent",
+                "amount": 1000,
+                "frequency": "monthly",
+                "start_date": "2026-04-01",
+                "next_due_date": "2026-04-01",
+                "category": "Housing",
+            }
+        ],
+    )
+
+    monkeypatch.setattr(
+        "sys.argv",
+        ["expense_tracker", "recurring", "delete", "1"],
+    )
+
+    # Act
+    main()
+    # Assert
+    assert len(save_calls) >= 1
+    assert save_calls[0] == []

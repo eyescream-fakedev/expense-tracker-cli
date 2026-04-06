@@ -458,3 +458,178 @@ def test_export_to_csv_handles_commas_in_description():
         next(reader)
         row = next(reader)
         assert row[2] == "Lunch, with extra"
+
+
+def test_add_recurring_expense_creates_templates():
+    """Test that add_recurring_expense creates a template for a new recurring expense."""
+    # Arrange
+    recurring = []
+    new_recurring = {
+        "description": "Rent",
+        "amount": 1000.00,
+        "category": "Housing",
+        "frequency": "monthly",
+        "start_date": "2026-01-01",
+    }
+    # Act
+    result = expense.add_recurring_expense(recurring, new_recurring)
+    # Assert
+    assert len(result) == 1
+    assert result[0]["id"] == 1
+    assert result[0]["description"] == "Rent"
+    assert result[0]["next_due_date"] == "2026-01-01"
+
+
+def test_add_recurring_expense_raises_on_missing_key():
+    """Test that add_recurring_expense raises a KeyError when required keys are missing."""
+    # Arrange
+    recurring = []
+    new_recurring = {
+        "description": "Rent",
+        "amount": 1000.00,
+    }
+    # Act & Assert
+    with pytest.raises(KeyError):
+        expense.add_recurring_expense(recurring, new_recurring)
+
+
+def test_add_recurring_expense_assigns_unique_ids():
+    """Test that add_recurring_expense assigns unique IDs to each recurring expense."""
+    # Arrange & Act
+    recurring = []
+    r1 = expense.add_recurring_expense(
+        recurring,
+        {
+            "description": "Rent",
+            "amount": 1000,
+            "category": "Housing",
+            "frequency": "monthly",
+            "start_date": "2026-01-01",
+        },
+    )
+    r2 = expense.add_recurring_expense(
+        r1,
+        {
+            "description": "Netflix",
+            "amount": 15,
+            "category": "Entertainment",
+            "frequency": "monthly",
+            "start_date": "2026-01-01",
+        },
+    )
+    # Assert
+    assert r2[0]["id"] == 1
+    assert r2[1]["id"] == 2
+
+
+def test_generate_due_expenses_creates_expense_when_due():
+    """Test that generate_due_expenses creates an expense when the recurring expense is due."""
+    # Arrange
+    recurring = [
+        {
+            "id": 1,
+            "description": "Rent",
+            "amount": 1000.00,
+            "category": "Housing",
+            "frequency": "monthly",
+            "start_date": "2026-01-01",
+            "next_due_date": "2026-04-01",
+        }
+    ]
+    expenses = []
+    today = "2026-04-01"
+    # Act
+    generated, updated_recurring = expense.generate_due_expenses(
+        recurring,
+        expenses,
+        today,
+    )
+    # Assert
+    assert len(generated) == 1
+    assert generated[0]["description"] == "Rent"
+    assert generated[0]["amount"] == 1000.00
+    assert generated[0]["date"] == "2026-04-01"
+
+    # Recurring should have updated next_due_date
+    assert updated_recurring[0]["next_due_date"] == "2026-05-01"
+
+
+def test_generate_due_expenses_skips_future_templates():
+    """Test that future templates are skipped when generating due expenses."""
+    # Arrange
+    recurring = [
+        {
+            "id": 1,
+            "description": "Rent",
+            "amount": 1000.00,
+            "category": "Housing",
+            "frequency": "monthly",
+            "start_date": "2026-01-01",
+            "next_due_date": "2026-05-01",
+        }
+    ]
+    expenses = []
+    today = "2026-04-01"
+    # Act
+    generated, updated_recurring = expense.generate_due_expenses(
+        recurring, expenses, today
+    )
+    # Assert
+    assert len(generated) == 0
+    assert len(updated_recurring) == 1
+    assert updated_recurring[0]["next_due_date"] == "2026-05-01"
+
+
+def test_generate_due_expenses_mixed_due_and_future():
+    """Test generating due expenses with both due and future recurring expenses."""
+    # Arrange
+    recurring = [
+        {
+            "description": "Rent",
+            "frequency": "monthly",
+            "next_due_date": "2026-04-01",
+        },
+        {
+            "description": "Netflix",
+            "frequency": "monthly",
+            "next_due_date": "2026-05-01",
+        },
+    ]
+    expenses = []
+    today = "2026-04-01"
+    # Act
+    generated, updated_recurring = expense.generate_due_expenses(
+        recurring, expenses, today
+    )
+    # Assert
+    assert len(generated) == 1
+    assert generated[0]["description"] == "Rent"
+    assert len(updated_recurring) == 2
+    assert updated_recurring[0]["next_due_date"] == "2026-05-01"
+    assert updated_recurring[1]["next_due_date"] == "2026-05-01"
+
+
+def test_generate_due_expenses_yearly_leap_year():
+    """Test generating due expenses for a yearly recurring expense on a leap year day."""
+    # Arrange
+    recurring = [
+        {
+            "id": 1,
+            "description": "Annual Subscription",
+            "amount": 100.00,
+            "category": "Subscriptions",
+            "frequency": "yearly",
+            "start_date": "2024-02-29",
+            "next_due_date": "2024-02-29",
+        }
+    ]
+    expenses = []
+    today = "2024-02-29"
+    # Act
+    generated, updated_recurring = expense.generate_due_expenses(
+        recurring, expenses, today
+    )
+    # Assert
+    assert len(generated) == 1
+    assert generated[0]["description"] == "Annual Subscription"
+    assert updated_recurring[0]["next_due_date"] == "2025-02-28"

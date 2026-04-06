@@ -1,7 +1,8 @@
 """Business logic for expense operations."""
 
+import calendar
 import csv
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 
@@ -197,3 +198,148 @@ def _generate_next_id(expenses: list[dict]) -> int:
     """
     max_id = max((e.get("id", 0) for e in expenses), default=0)
     return max_id + 1
+
+
+def add_recurring_expense(recurring: list[dict], new_recurring: dict) -> list[dict]:
+    """
+    Add a new recurring expense to the list of recurring expenses.
+
+    Args:
+        recurring (list[dict]): A list of existing recurring expense dictionaries.
+        new_recurring (dict): A dictionary representing the new recurring expense.
+
+    Returns:
+        list[dict]: The updated list of recurring expenses.
+    """
+    # validate required keys are present
+    required_keys = ["description", "amount", "category", "frequency", "start_date"]
+    for key in required_keys:
+        if key not in new_recurring:
+            raise KeyError(f"Missing '{key}' key in recurring expense")
+
+    new_recurring_copy = new_recurring.copy()
+    new_recurring_copy["id"] = _generate_next_id(recurring)
+    new_recurring_copy["next_due_date"] = new_recurring_copy["start_date"]
+    return recurring + [new_recurring_copy]
+
+
+def _calculate_next_due(frequency: str, current_date: date) -> str:
+    """
+    Calculate the next due date based on the frequency and current date.
+
+    Args:
+        frequency (str): The frequency of the expense ("weekly", "monthly", "yearly", or "daily").
+        current_date (date): The current date.
+
+    Returns:
+        str: The next due date in "YYYY-MM-DD" format.
+    """
+    if frequency == "weekly":
+        new_date = current_date + timedelta(days=7)
+    elif frequency == "monthly":
+        month = current_date.month
+        year = current_date.year
+
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+
+        # Handle month end differences (e.g Jan31 -> Feb 28)
+        try:
+            new_date = current_date.replace(year=year, month=month)
+        except ValueError:
+            last_day = calendar.monthrange(year, month)[1]
+            new_date = current_date.replace(year=year, month=month, day=last_day)
+    elif frequency == "yearly":
+        try:
+            new_date = current_date.replace(year=current_date.year + 1)
+        except ValueError:
+            year = current_date.year + 1
+            last_day_feb = calendar.monthrange(year, 2)[1]
+            new_date = current_date.replace(year=year, day=last_day_feb)
+    elif frequency == "daily":
+        new_date = current_date + timedelta(days=1)
+    else:
+        raise ValueError(f"Invalid frequency: {frequency}")
+    return new_date.strftime("%Y-%m-%d")
+
+
+def generate_due_expenses(
+    recurring: list[dict], expenses: list[dict], today: str | date | None = None
+) -> tuple:
+    """
+    Generate due expenses based on the recurring templates and current date.
+
+    Args:
+        recurring (list[dict]): The list of recurring expense templates.
+        expenses (list[dict]): The list of existing expenses.
+        today (str | date | None, optional): The current date in "YYYY-MM-DD" format or as a date object.
+        If None, the current date is used.
+
+    Returns:
+        tuple: A tuple containing the generated due expenses and the updated recurring templates.
+    """
+    if today is None:
+        today_dt = datetime.now().date()
+        today_str = today_dt.strftime("%Y-%m-%d")
+    elif isinstance(today, str):
+        today_dt = datetime.strptime(today, "%Y-%m-%d").date()
+        today_str = today
+    else:
+        today_dt = today
+        today_str = today.strftime("%Y-%m-%d")
+
+    generated = []
+    updated_recurring = []
+
+    for template in recurring:
+        next_due_dt = datetime.strptime(
+            template["next_due_date"],
+            "%Y-%m-%d",
+        ).date()
+
+        if next_due_dt <= today_dt:
+            new_expense = {
+                "id": _generate_next_id(expenses + generated),
+                "description": template["description"],
+                "amount": template.get("amount"),
+                "category": template.get("category"),
+                "date": today_str,
+            }
+
+            generated.append(new_expense)
+
+            new_template = template.copy()
+            new_template["next_due_date"] = _calculate_next_due(
+                template["frequency"], next_due_dt
+            )
+            updated_recurring.append(new_template)
+
+        else:
+            updated_recurring.append(template)
+
+    return generated, updated_recurring
+
+
+def delete_recurring_expense(recurring: list[dict], expense_id: int) -> list[dict]:
+    """
+    Delete a recurring expense from the list by its ID.
+
+    Args:
+        recurring (list[dict]): The list of recurring expenses.
+        expense_id (int): The ID of the expense to delete.
+
+    Returns:
+        list[dict]: The updated list of recurring expenses.
+
+    Raises:
+        ValueError: If no recurring expense with the given ID is found.
+    """
+    for r in recurring:
+        if r.get("id") == expense_id:
+            recurring.remove(r)
+            return recurring
+
+    raise ValueError(f"Recurring expense with ID {expense_id} not found")
