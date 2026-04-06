@@ -9,6 +9,7 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ View summary totals (with optional filtering)
 - ✅ **Export to CSV** (with filtering support, comma-safe)
 - ✅ **Budget checking** (with filtering support, positive amount validation)
+- ✅ **Recurring expenses** (automatic generation, monthly/yearly support)
 - ✅ **Custom data file path** (`--data-file`)
 - ✅ **User-writable default location** (`~/.expense-tracker/expenses.json`)
 - ✅ **Month validation** (1-12 range)
@@ -20,7 +21,7 @@ A command-line expense tracker application built with Python using TDD (Test-Dri
 - ✅ **Optional categories** (free-text)
 - ✅ JSON file storage (UTF-8, pretty-printed)
 - ✅ **Consistent error exit codes** (for scripting/automation)
-- ✅ **59 automated tests** (CLI, business logic, storage)
+- ✅ **70 automated tests** (CLI, business logic, storage)
 
 ## Installation
 
@@ -150,6 +151,21 @@ python -m expense_tracker.cli budget --amount 1000 --year 2026 --month 4
 ```
 
 **Note:** Budget amount must be a positive number. Negative or zero values are rejected.
+
+### Manage Recurring Expenses
+```bash
+# Add a recurring expense (Rent)
+python -m expense_tracker.cli recurring add "Rent" 1000 --frequency monthly --start-date 2026-01-01
+
+# List all recurring templates
+python -m expense_tracker.cli recurring list
+
+# Generate expenses that are due today
+python -m expense_tracker.cli recurring generate
+
+# Delete a recurring template (ID 1)
+python -m expense_tracker.cli recurring delete 1
+```
 
 ## Running Tests
 
